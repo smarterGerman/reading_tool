@@ -72,11 +72,11 @@ function levenshteinPath(arr1: string[], arr2: string[], comp: (a: string, b: st
 function renderOp(op: Op, arr1: string[], arr2: string[]) {
     switch (op[0]) {
         case OpKind.Insert:
-            return <li className="transcript-element transcript-add">{arr2[op[1]]}</li>
+            return <span className="transcript-add">{arr2[op[1]]} </span>
         case OpKind.Remove:
-            return <li className="transcript-element transcript-remove">{arr1[op[1]]}</li>
+            return <span className="transcript-remove">{arr1[op[1]]} </span>
         case OpKind.Noop:
-            return <li className="transcript-element transcript-correct">{arr1[op[1]]}</li>
+            return <span className="transcript-correct">{arr1[op[1]]} </span>
     }
 }
 
@@ -85,11 +85,9 @@ function renderDiff(arr1: string[], arr2: string[], comp: (a: string, b: string)
     while(trim && path.length > 1 && path[path.length - 1][0] === OpKind.Insert) {
         path.pop()
     }
-    return <>
-        <ul>
-            {path.map(op => renderOp(op, arr1, arr2))}
-        </ul>
-    </>
+    return (<p>
+        {path.map(op => renderOp(op, arr1, arr2))}
+    </p>)
 }
 
 function getWords(s: string) {

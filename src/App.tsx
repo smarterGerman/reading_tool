@@ -1,96 +1,76 @@
 import { useEffect, useState } from 'react'
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'
 import './App.css'
-import Feedback from './Feedback.tsx'
+import ReadingTool from './ReadingTool'
+
+type Section = {
+  id: string,
+  content: string,
+}
+
+type SenteceData = {
+  sections: Section[]
+}
+
+function extractSentences(data: SenteceData, id: string) {
+  for (const section of data.sections) {
+    if(section.id === id) {
+      return section
+        .content
+        .split("\n")
+        .map(s => s.trim())
+        .filter(s => s.length > 0)
+    }
+  }
+  return null
+}
 
 function App() {
-  const sentences = [
-    "Es ist ein schöner Montagmorgen in Berlin.",
-    "Die Sonne scheint und die Vögel zwitschern fröhlich in den Bäumen.",
-  ]
+  const [sentences, setSentences] = useState<null | string[]>(null)
+  const [error, setError] = useState<null | string>(null)
 
-  // Special values:
-  // -1 - unstarted
-  // sentences.length - finished
-  const [sentenceIndex, setSentenceIndex] = useState(-1)
+  const queryParameters = new URLSearchParams(window.location.search)
+  const jsonURL = queryParameters.get("json")
+  const sectionId = queryParameters.get("id")
 
-  function speakCurrentSentence() {
-    if(sentenceIndex >= 0 && sentenceIndex < sentences.length) {
-      speechSynthesis.cancel()
-      let utterance = new SpeechSynthesisUtterance(sentences[sentenceIndex])
-      utterance.lang = "de_DE"
-      utterance.onerror = (e: any) => {
-        console.log("TTS error: " + e.error)
-        console.log("Message: " + e.message)
+  if(!jsonURL) {
+    return (<p>Integration is not configured correctly: parameter "json" is missing!</p>)
+  }
+
+  if(!sectionId) {
+    return (<p>Integration is not configured correctly: parameter "id" is missing!</p>)
+  }
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch(jsonURL as string)
+        if (!response.ok) {
+          throw new Error(`Unsuccessful status code: ${response.status} ${response.statusText}`)
+        }
+        const data = await response.json();
+        const sentences = extractSentences(data, sectionId as string)
+        if(!sentences) {
+          throw new Error(`No sentences for key ${sectionId}`)
+        }
+        setSentences(sentences)
+      } catch (e: any) {
+        console.error(e.message)
+        setError("Error retrieving lesson data. Check your internet connection.")
       }
-      speechSynthesis.speak(utterance)
     }
+
+    fetchData()
+  }, [])
+
+  if(error) {
+    return <><p>{error}</p></>
   }
 
-  useEffect(speakCurrentSentence, [sentenceIndex])
-
-  const {
-    transcript,
-    resetTranscript,
-    listening,
-    browserSupportsSpeechRecognition
-  } = useSpeechRecognition()
-
-  if (!browserSupportsSpeechRecognition) {
-    return <>
-      <p>Your browser does not support speech recognition!</p>
-    </>
+  if(!sentences) {
+    return <><p>Loading...</p></>
   }
 
-  function toggleSpeechRecognition() {
-    if (listening) {
-      SpeechRecognition.stopListening()
-    } else {
-      resetTranscript()
-      SpeechRecognition.startListening({
-        language: "de-DE",
-        continuous: true
-      })
-    }
-  }
-
-  function goToSentence(index: number) {
-    if (listening) {
-      SpeechRecognition.stopListening()
-    }
-    resetTranscript()
-    setSentenceIndex(index)
-  }
-
-  function nextSentence() {
-    goToSentence(sentenceIndex + 1)
-  }
-
-  function prevSentence() {
-    goToSentence(sentenceIndex - 1)
-  }
-
-  if(sentenceIndex < 0) {
-    return <button onClick={nextSentence}>Start</button>
-  }
-
-  if(sentenceIndex === sentences.length) {
-    return (
-      <>
-        <p>All sentences are completed!</p>
-        <button onClick={prevSentence}>Back</button>
-      </>)
-  }
-
-  return (
-    <>
-      <p>{sentences[sentenceIndex]}<button onClick={speakCurrentSentence}>🔊</button></p>
-      <Feedback transcript={transcript} sentence={sentences[sentenceIndex]} listening={listening} />
-      <button onClick={toggleSpeechRecognition}>🎤 {listening ? "Listening..." : ""}</button>
-      { sentenceIndex > 0 ? <button onClick={prevSentence}>Back</button> : null}
-      <button onClick={nextSentence}>Next</button>
-    </>
-  )
+  return <ReadingTool sentences={sentences} />
 }
 
 export default App
