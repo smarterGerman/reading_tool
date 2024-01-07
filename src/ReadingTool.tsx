@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'
 import './App.css'
 import Feedback from './Feedback.tsx'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faVolumeHigh, faMicrophone } from '@fortawesome/free-solid-svg-icons'
 
 type ReadingToolProps = {
   sentences?: string[]
@@ -16,7 +18,8 @@ function ReadingTool(props: ReadingToolProps) {
   // Special values:
   // -1 - unstarted
   // sentences.length - finished
-  const [sentenceIndex, setSentenceIndex] = useState(-1)
+  // Change to -1 to show "Start" button
+  const [sentenceIndex, setSentenceIndex] = useState(0)
 
   function speakCurrentSentence() {
     if(sentenceIndex >= 0 && sentenceIndex < sentences.length) {
@@ -31,7 +34,8 @@ function ReadingTool(props: ReadingToolProps) {
     }
   }
 
-  useEffect(speakCurrentSentence, [sentenceIndex])
+  // Uncomment for automatic TTS.
+  // useEffect(speakCurrentSentence, [sentenceIndex])
 
   const {
     transcript,
@@ -90,8 +94,8 @@ function ReadingTool(props: ReadingToolProps) {
     <>
       <p>{sentences[sentenceIndex]}</p>
       <Feedback transcript={transcript} sentence={sentences[sentenceIndex]} listening={listening} />
-      <button onClick={speakCurrentSentence}>🔊</button>
-      <button onClick={toggleSpeechRecognition}>🎤 {listening ? "Listening..." : ""}</button>
+      <button onClick={speakCurrentSentence}><FontAwesomeIcon icon={faVolumeHigh} /></button>
+      <button onClick={toggleSpeechRecognition}><FontAwesomeIcon icon={faMicrophone} /> {listening ? "Listening..." : ""}</button>
       { sentenceIndex > 0 ? <button onClick={prevSentence}>Back</button> : null}
       <button onClick={nextSentence}>Next</button>
     </>
