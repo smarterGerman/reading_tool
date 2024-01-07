@@ -95,7 +95,7 @@ function getWords(s: string) {
 }
 
 function preprocess(word: string) {
-    return word.toUpperCase().replaceAll(/[\.,]/gi, "")
+    return word.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-—\(\)\[\]]/gi, "")
 }
 
 type FeedbackProps = {

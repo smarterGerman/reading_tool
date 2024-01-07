@@ -4,7 +4,7 @@ import './App.css'
 import Feedback from './Feedback.tsx'
 
 type ReadingToolProps = {
-  sentences: null | string[]
+  sentences?: string[]
 }
 
 function ReadingTool(props: ReadingToolProps) {

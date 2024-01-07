@@ -32,6 +32,10 @@ function App() {
   const jsonURL = queryParameters.get("json")
   const sectionId = queryParameters.get("id")
 
+  if (!jsonURL && !sectionId) {
+    return <ReadingTool />
+  }
+
   if(!jsonURL) {
     return (<p>Integration is not configured correctly: parameter "json" is missing!</p>)
   }
