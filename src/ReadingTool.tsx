@@ -25,7 +25,7 @@ function ReadingTool(props: ReadingToolProps) {
     if(sentenceIndex >= 0 && sentenceIndex < sentences.length) {
       speechSynthesis.cancel()
       let utterance = new SpeechSynthesisUtterance(sentences[sentenceIndex])
-      utterance.lang = "de_DE"
+      utterance.lang = "de"
       utterance.onerror = (e: any) => {
         console.log("TTS error: " + e.error)
         console.log("Message: " + e.message)
