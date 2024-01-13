@@ -3,7 +3,8 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import './App.css'
 import Feedback from './Feedback.tsx'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faVolumeHigh, faMicrophone } from '@fortawesome/free-solid-svg-icons'
+import { faVolumeHigh, faMicrophone, faCircleQuestion, faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { useHotkeys } from 'react-hotkeys-hook'
 
 type ReadingToolProps = {
   sentences?: string[]
@@ -20,22 +21,7 @@ function ReadingTool(props: ReadingToolProps) {
   // sentences.length - finished
   // Change to -1 to show "Start" button
   const [sentenceIndex, setSentenceIndex] = useState(0)
-
-  function speakCurrentSentence() {
-    if(sentenceIndex >= 0 && sentenceIndex < sentences.length) {
-      speechSynthesis.cancel()
-      let utterance = new SpeechSynthesisUtterance(sentences[sentenceIndex])
-      utterance.lang = "de"
-      utterance.onerror = (e: any) => {
-        console.log("TTS error: " + e.error)
-        console.log("Message: " + e.message)
-      }
-      speechSynthesis.speak(utterance)
-    }
-  }
-
-  // Uncomment for automatic TTS.
-  // useEffect(speakCurrentSentence, [sentenceIndex])
+  const [displayHelp, setDisplayHelp] = useState(false);
 
   const {
     transcript,
@@ -71,12 +57,36 @@ function ReadingTool(props: ReadingToolProps) {
   }
 
   function nextSentence() {
-    goToSentence(sentenceIndex + 1)
+    if(sentenceIndex < sentences.length) {
+      goToSentence(sentenceIndex + 1)
+    }
   }
 
   function prevSentence() {
-    goToSentence(sentenceIndex - 1)
+    if(sentenceIndex > 0) {
+      goToSentence(sentenceIndex - 1)
+    }
   }
+
+  useHotkeys("ArrowLeft", prevSentence)
+  useHotkeys("ArrowRight", nextSentence)
+  useHotkeys("Ctrl+Enter", toggleSpeechRecognition)
+
+  function speakCurrentSentence() {
+    if(sentenceIndex >= 0 && sentenceIndex < sentences.length) {
+      speechSynthesis.cancel()
+      let utterance = new SpeechSynthesisUtterance(sentences[sentenceIndex])
+      utterance.lang = "de"
+      utterance.onerror = (e: any) => {
+        console.log("TTS error: " + e.error)
+        console.log("Message: " + e.message)
+      }
+      speechSynthesis.speak(utterance)
+    }
+  }
+
+  // Uncomment for automatic TTS.
+  // useEffect(speakCurrentSentence, [sentenceIndex])
 
   if(sentenceIndex < 0) {
     return <button onClick={nextSentence}>Start</button>
@@ -90,6 +100,16 @@ function ReadingTool(props: ReadingToolProps) {
       </>)
   }
 
+  const help = displayHelp ? (
+    <>
+      <p>Keyboard shortcuts:</p>
+      <ul className='no-bullets'>
+        <li><FontAwesomeIcon icon={faArrowLeft} /> - Back</li>
+        <li><FontAwesomeIcon icon={faArrowRight} /> - Next</li>
+        <li>Ctrl+Enter - Toggle recording</li>
+      </ul>
+    </>) : null
+
   return (
     <>
       <p>{sentences[sentenceIndex]}</p>
@@ -98,6 +118,8 @@ function ReadingTool(props: ReadingToolProps) {
       <button onClick={toggleSpeechRecognition}><FontAwesomeIcon icon={faMicrophone} /> {listening ? "Listening..." : ""}</button>
       { sentenceIndex > 0 ? <button onClick={prevSentence}>Back</button> : null}
       <button onClick={nextSentence}>Next</button>
+      <button onClick={() => setDisplayHelp(!displayHelp)}><FontAwesomeIcon icon={faCircleQuestion} /></button>
+      {help}
     </>
   )
 }
