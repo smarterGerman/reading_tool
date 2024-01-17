@@ -48,9 +48,11 @@ function ReadingTool(props: ReadingToolProps) {
     }
   }
 
-  function goToSentence(index: number) {
+  async function goToSentence(index: number) {
     if (listening) {
-      SpeechRecognition.stopListening()
+      // If this is not awaited, resetting the transcript might not work as
+      // speech recognition will still keep updating it for a few moments.
+      await SpeechRecognition.stopListening()
     }
     resetTranscript()
     setSentenceIndex(index)
