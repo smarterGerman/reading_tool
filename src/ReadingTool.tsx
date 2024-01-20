@@ -23,6 +23,15 @@ function ReadingTool(props: ReadingToolProps) {
   const [sentenceIndex, setSentenceIndex] = useState(0)
   const [displayHelp, setDisplayHelp] = useState(false);
 
+  // Whether the app should listen when switching to the next sentence.
+  // Generally, it should have the same value as `listening`, except for the
+  // end screen after the last sentence.
+  // When the user clicks Next after the last sentence and goes to the final
+  // screen, the app will stop listening, but shouldListen will remain unchanged,
+  // so that when the user clicks "Back" on the final screen, the app will start
+  // listening again.
+  const [shouldListen, setShouldListen] = useState(false);
+
   const {
     transcript,
     resetTranscript,
@@ -36,15 +45,20 @@ function ReadingTool(props: ReadingToolProps) {
     </>
   }
 
+  const listeningSettings = {
+    language: "de-DE",
+    continuous: true
+  }
+
   function toggleSpeechRecognition() {
+    if (sentenceIndex < 0 || sentenceIndex >= sentences.length) return
     if (listening) {
+      setShouldListen(false)
       SpeechRecognition.stopListening()
     } else {
       resetTranscript()
-      SpeechRecognition.startListening({
-        language: "de-DE",
-        continuous: true
-      })
+      SpeechRecognition.startListening(listeningSettings)
+      setShouldListen(true)
     }
   }
 
@@ -56,6 +70,9 @@ function ReadingTool(props: ReadingToolProps) {
     }
     resetTranscript()
     setSentenceIndex(index)
+    if (index < sentences.length && shouldListen) {
+      SpeechRecognition.startListening(listeningSettings)
+    }
   }
 
   function nextSentence() {
