@@ -21,6 +21,8 @@ function ReadingTool(props: ReadingToolProps) {
     "Ich habe 7 Äpfel gekauft.",
     // zum Beispiel is recognized as "z. B." - adding this sentence so that I can easily test that that works.
     "Es gibt viele interessante Sehenswürdigkeiten in Berlin, zum Beispiel das Brandenburger Tor und das Berliner Dom.",
+    // Speech recognition converts "halb 7" to "6:30"
+    "Ich treffe dich um halb 7 am Bahnhof."
   ]
 
   // Special values:

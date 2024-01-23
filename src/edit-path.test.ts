@@ -105,3 +105,17 @@ test('editPath - handle numbers as numbers and as words', () => {
         ['NoOp', 'b'],
     ])
 })
+
+test('editPath - handle 6:30 vs halb 7', () => {
+    const norm = (a: string) => a.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-—\(\)\[\]]/gi, "")
+    expect(editPath(['a', '6:30', 'Uhr', 'b'], ['a', 'halb', '7', 'b'], norm)).toStrictEqual([
+        ['NoOp', 'a'],
+        ['NoOp', 'halb 7'],
+        ['NoOp', 'b'],
+    ])
+    expect(editPath(['a', '6:30', 'Uhr', 'b'], ['a', 'halb', 'sieben', 'b'], norm)).toStrictEqual([
+        ['NoOp', 'a'],
+        ['NoOp', 'halb sieben'],
+        ['NoOp', 'b'],
+    ])
+})

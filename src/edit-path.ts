@@ -170,12 +170,48 @@ function numberMatcher(from: string[], to: string[], from_i: number, to_i: numbe
     return null
 }
 
+const hoursToWords = [
+    'null',
+    'eins',
+    'zwei',
+    'drei',
+    'vier',
+    'fünf',
+    'sechs',
+    'sieben',
+    'acht',
+    'neun',
+    'zehn',
+    'elf',
+    'zwölf',
+    'eins',
+]
+
+/**
+ * Matches "<X>:30 Uhr" to "halb <X+1>", accepts both words and numbers.
+ * We need this because speech recognition tends to recognize "halb sieben" as "6:30 Uhr"
+ */
+function timeMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
+    if (from_i == 0 || to_i == 0) return null
+    console.log(`${from[from_i - 1]} ${from[from_i]}`)
+    console.log(`${to[to_i - 1]} ${to[to_i]}`)
+    if (normalize(to[to_i - 1]) !== normalize('halb') || normalize(from[from_i]) !== normalize('Uhr')) return null
+    
+    let match = from[from_i - 1].match(/^(\d+):30$/)
+    if(match && (normalize(to[to_i]) === normalize((+match[1] + 1).toString()) ||
+            normalize(to[to_i]) === normalize(hoursToWords[+match[1] + 1]))) {
+        return [new NoOp(2, 2), 0]
+    }
+    return null
+}
+
 const MATCHERS: Matcher[] = [
     // All of these produce NoOp and add 0 to the edit distance
     noOpMatcher,
     mergeMatcher,
     specialSubMatcher,
     numberMatcher,
+    timeMatcher,
     // These produce their corresponding ops and add 1 to the edit distance
     insertMatcher,
     removeMatcher,
