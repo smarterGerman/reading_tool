@@ -9,113 +9,113 @@ test('editPath - empty to empty', () => {
 
 test('editPath - identity', () => {
     expect(editPath(['a', 'b'], ['a', 'b'], normalize)).toStrictEqual([
-        ['NoOp', 'a'],
-        ['NoOp', 'b']
+        ['match', 'a'],
+        ['match', 'b']
     ])
 })
 
 test('editPath - from empty to non-empty', () => {
     expect(editPath([], ['a', 'b'], normalize)).toStrictEqual([
-        ['InsertOp', 'a'],
-        ['InsertOp', 'b'],
+        ['insert', 'a'],
+        ['insert', 'b'],
     ])
 })
 
 test('editPath - from non-empty to empty', () => {
     expect(editPath(['a', 'b'], [], normalize)).toStrictEqual([
-        ['RemoveOp', 'a'],
-        ['RemoveOp', 'b'],
+        ['remove', 'a'],
+        ['remove', 'b'],
     ])
 })
 
 test('editPath - add in the middle', () => {
     expect(editPath(['a', 'c'], ['a', 'b', 'c'], normalize)).toStrictEqual([
-        ['NoOp', 'a'],
-        ['InsertOp', 'b'],
-        ['NoOp', 'c'],
+        ['match', 'a'],
+        ['insert', 'b'],
+        ['match', 'c'],
     ])
 })
 
 test('editPath - remove in the middle', () => {
     expect(editPath(['a', 'b', 'c'], ['a', 'c'], normalize)).toStrictEqual([
-        ['NoOp', 'a'],
-        ['RemoveOp', 'b'],
-        ['NoOp', 'c']
+        ['match', 'a'],
+        ['remove', 'b'],
+        ['match', 'c']
     ])
 })
 
 test('editPath - merge with hyphen', () => {
     expect(editPath(['ein', 'Kaffee', 'Desaster', 'test'], ['ein', 'Kaffee-Desaster', 'test'], normalize)).toStrictEqual([
-        ['NoOp', 'ein'],
-        ['NoOp', 'Kaffee-Desaster'],
-        ['NoOp', 'test'],
+        ['match', 'ein'],
+        ['match', 'Kaffee-Desaster'],
+        ['match', 'test'],
     ])
 })
 
 test('editPath - merge without hyphen', () => {
     expect(editPath(['ein', 'Kaffee', 'Desaster', 'test'], ['ein', 'KaffeeDesaster', 'test'], normalize)).toStrictEqual([
-        ['NoOp', 'ein'],
-        ['NoOp', 'KaffeeDesaster'],
-        ['NoOp', 'test'],
+        ['match', 'ein'],
+        ['match', 'KaffeeDesaster'],
+        ['match', 'test'],
     ])
 })
 
 test('editPath - special merge', () => {
     expect(editPath(['ein', 'Café', 'Desaster', 'test'], ['ein', 'Kaffee-Desaster', 'test'], normalize)).toStrictEqual([
-        ['NoOp', 'ein'],
-        ['NoOp', 'Kaffee-Desaster'],
-        ['NoOp', 'test'],
+        ['match', 'ein'],
+        ['match', 'Kaffee-Desaster'],
+        ['match', 'test'],
     ])
 })
 
 test('editPath - special merge - zum Beispiel', () => {
     expect(editPath(['ein', 'z.', 'B.', 'test'], ['ein', 'zum', 'Beispiel', 'test'], normalize)).toStrictEqual([
-        ['NoOp', 'ein'],
-        ['NoOp', 'zum Beispiel'],
-        ['NoOp', 'test'],
+        ['match', 'ein'],
+        ['match', 'zum Beispiel'],
+        ['match', 'test'],
     ])
 })
 
 test('editPath - special merge - zum Beispiel 2', () => {
     expect(editPath(['ein', 'z.B', 'test'], ['ein', 'zum', 'Beispiel', 'test'], normalize)).toStrictEqual([
-        ['NoOp', 'ein'],
-        ['NoOp', 'zum Beispiel'],
-        ['NoOp', 'test'],
+        ['match', 'ein'],
+        ['match', 'zum Beispiel'],
+        ['match', 'test'],
     ])
 })
 
 test('editPath - special merge with a normalize function', () => {
     expect(editPath(['ein', 'Café', 'Desaster', 'test'], ['ein', 'Kaffee-Desaster', 'test'],
         (a: string) => a.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-—\(\)\[\]]/gi, ""))).toStrictEqual([
-            ['NoOp', 'ein'],
-            ['NoOp', 'Kaffee-Desaster'],
-            ['NoOp', 'test'],
+            ['match', 'ein'],
+            ['match', 'Kaffee-Desaster'],
+            ['match', 'test'],
         ])
 })
 
 test('editPath - handle numbers as numbers and as words', () => {
     expect(editPath(['a', '324', 'b'], ['a', 'dreihundertvierundzwanzig', 'b'], normalize)).toStrictEqual([
-        ['NoOp', 'a'],
-        ['NoOp', 'dreihundertvierundzwanzig'],
-        ['NoOp', 'b'],
+        ['match', 'a'],
+        ['match', 'dreihundertvierundzwanzig'],
+        ['match', 'b'],
     ])
     expect(editPath(['a', 'dreihundertvierundzwanzig', 'b'], ['a', '324', 'b'], normalize)).toStrictEqual([
-        ['NoOp', 'a'],
-        ['NoOp', '324'],
-        ['NoOp', 'b'],
+        ['match', 'a'],
+        ['match', '324'],
+        ['match', 'b'],
     ])
 })
 
 test('editPath - handle 6:30 vs halb 7', () => {
     const norm = (a: string) => a.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-—\(\)\[\]]/gi, "")
     expect(editPath(['a', '6:30', 'Uhr', 'b'], ['a', 'halb', '7', 'b'], norm)).toStrictEqual([
-        ['NoOp', 'a'],
-        ['NoOp', 'halb 7'],
-        ['NoOp', 'b'],
+        ['match', 'a'],
+        ['match', 'halb 7'],
+        ['match', 'b'],
     ])
     expect(editPath(['a', '6:30', 'Uhr', 'b'], ['a', 'halb', 'sieben', 'b'], norm)).toStrictEqual([
-        ['NoOp', 'a'],
-        ['NoOp', 'halb sieben'],
-        ['NoOp', 'b'],
+        ['match', 'a'],
+        ['match', 'halb sieben'],
+        ['match', 'b'],
     ])
 })

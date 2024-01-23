@@ -3,6 +3,7 @@ import numberToWords from "./numbers-to-words"
 abstract class Op {
     abstract pred(i: number, j: number): [number, number]
     abstract toString(from: string[], to: string[], i: number, j: number): string
+    abstract style(): string
 }
 
 class InsertOp extends Op {
@@ -12,6 +13,7 @@ class InsertOp extends Op {
     toString(_: string[], to: string[], _i: number, j: number) {
         return to[j - 1]
     }
+    style() { return 'insert' }
 }
 
 class RemoveOp extends Op {
@@ -21,6 +23,7 @@ class RemoveOp extends Op {
     toString(from: string[], _: string[], i: number, _j: number) {
         return from[i - 1]
     }
+    style() { return 'remove' }
 }
 
 /**
@@ -32,7 +35,7 @@ class RemoveOp extends Op {
  *   semantically rather than letter-to-letter. Example: z. B. => zum Beispiel
  * So it can match an arbitrary number of words in both sequences.
  */
-class NoOp extends Op {
+class MatchOp extends Op {
     pred(i: number, j: number): [number, number] {
         return [i - this.count_from, j - this.count_to]
     }
@@ -42,6 +45,7 @@ class NoOp extends Op {
     constructor(
         public readonly count_from: number,
         public readonly count_to: number) { super() }
+    style() { return 'match' }
 }
 
 export type RenderedOp = [string, string]
@@ -53,7 +57,7 @@ function traversePathImpl(from: string[], to: string[], ops: Op[][], i: number, 
 
     let [p_i, p_j] = op.pred(i, j)
     traversePathImpl(from, to, ops, p_i, p_j, accum)
-    accum.push([op.constructor.name, op.toString(from, to, i, j)])
+    accum.push([op.style(), op.toString(from, to, i, j)])
 }
 
 /**
@@ -93,13 +97,13 @@ function runMatchers(matchers: Matcher[], dist: number[][], from: string[], to: 
 }
 
 function noOpMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
-    return normalize(from[from_i]) === normalize(to[to_i]) ? [new NoOp(1, 1), 0] : null
+    return normalize(from[from_i]) === normalize(to[to_i]) ? [new MatchOp(1, 1), 0] : null
 }
 
 function mergeMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
     if (normalize(from[from_i - 1] + '-' + from[from_i]) === normalize(to[to_i]) ||
         normalize(from[from_i - 1] + from[from_i]) === normalize(to[to_i]))
-        return [new NoOp(2, 1), 0]
+        return [new MatchOp(2, 1), 0]
     return null
 }
 
@@ -143,7 +147,7 @@ function specialSubMatcher(from: string[], to: string[], from_i: number, to_i: n
                 continue subs;
             }
         }
-        return [new NoOp(sub_from.length, sub_to.length), 0]
+        return [new MatchOp(sub_from.length, sub_to.length), 0]
     }
     return null
 }
@@ -157,14 +161,14 @@ function numberMatcher(from: string[], to: string[], from_i: number, to_i: numbe
         let num_i = +from[from_i]
         let words_i = numberToWords(num_i)
         if (words_i !== null && normalize(words_i) == normalize(to[to_i])) {
-            return [new NoOp(1, 1), 0]
+            return [new MatchOp(1, 1), 0]
         }
     }
     if (!isNumberic(from[from_i]) && isNumberic(to[to_i])) {
         let num_i = +to[to_i]
         let words_i = numberToWords(num_i)
         if (words_i !== null && normalize(from[from_i]) == normalize(words_i)) {
-            return [new NoOp(1, 1), 0]
+            return [new MatchOp(1, 1), 0]
         }
     }
     return null
@@ -193,14 +197,12 @@ const hoursToWords = [
  */
 function timeMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
     if (from_i == 0 || to_i == 0) return null
-    console.log(`${from[from_i - 1]} ${from[from_i]}`)
-    console.log(`${to[to_i - 1]} ${to[to_i]}`)
     if (normalize(to[to_i - 1]) !== normalize('halb') || normalize(from[from_i]) !== normalize('Uhr')) return null
     
     let match = from[from_i - 1].match(/^(\d+):30$/)
     if(match && (normalize(to[to_i]) === normalize((+match[1] + 1).toString()) ||
             normalize(to[to_i]) === normalize(hoursToWords[+match[1] + 1]))) {
-        return [new NoOp(2, 2), 0]
+        return [new MatchOp(2, 2), 0]
     }
     return null
 }
@@ -234,7 +236,7 @@ export function editPath(from: string[], to: string[], normalize: (a: string) =>
     // dist[i][j] - edit distance between from[:i] and to[:j]
     let dist = Array.from(Array(from.length + 1), () => new Array(to.length + 1).fill(0))
     // ops[i][j] - the last operation performed when converting from[:i] to to[:j]
-    let ops: Op[][] = Array.from(Array(from.length + 1), () => new Array(to.length + 1).fill(new NoOp(0, 0)))
+    let ops: Op[][] = Array.from(Array(from.length + 1), () => new Array(to.length + 1).fill(new MatchOp(0, 0)))
     for (let i = 1; i < from.length + 1; i++) {
         dist[i][0] = i
         ops[i][0] = new RemoveOp()

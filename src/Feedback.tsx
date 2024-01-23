@@ -10,7 +10,7 @@ function renderOp(op: [string, string]) {
 
 function renderDiff(from: string[], to: string[], trim: boolean) {
     let path = editPath(from, to, normalize)
-    while(trim && path.length > 1 && path[path.length - 1][0] === 'InsertOp') {
+    while(trim && path.length > 1 && path[path.length - 1][0] === 'insert') {
         path.pop()
     }
     return (<p>

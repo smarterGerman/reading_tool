@@ -9,15 +9,15 @@
   color: #888;
 }
 
-.transcript-NoOp {
+.transcript-match {
   color: green;
 }
 
-.transcript-RemoveOp {
+.transcript-remove {
   color: red;
 }
 
-.transcript-InsertOp {
+.transcript-insert {
   color: darkgoldenrod;
 }
 
