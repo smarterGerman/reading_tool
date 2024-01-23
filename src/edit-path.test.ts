@@ -92,3 +92,16 @@ test('editPath - special merge with a normalize function', () => {
             ['NoOp', 'test'],
         ])
 })
+
+test('editPath - handle numbers as numbers and as words', () => {
+    expect(editPath(['a', '324', 'b'], ['a', 'dreihundertvierundzwanzig', 'b'], normalize)).toStrictEqual([
+        ['NoOp', 'a'],
+        ['NoOp', 'dreihundertvierundzwanzig'],
+        ['NoOp', 'b'],
+    ])
+    expect(editPath(['a', 'dreihundertvierundzwanzig', 'b'], ['a', '324', 'b'], normalize)).toStrictEqual([
+        ['NoOp', 'a'],
+        ['NoOp', '324'],
+        ['NoOp', 'b'],
+    ])
+})

@@ -1,3 +1,5 @@
+import numberToWords from "./numbers-to-words"
+
 abstract class Op {
     abstract pred(i: number, j: number): [number, number]
     abstract toString(from: string[], to: string[], i: number, j: number): string
@@ -69,10 +71,45 @@ function traversePath(from: string[], to: string[], ops: Op[][]) {
     return accum
 }
 
-const SPECIAL_MERGES = new Map<string, string>([
-    ['Café Desaster', 'Kaffee-Desaster'],
-    ['z. B.', 'zum Beispiel'],
-])
+type Matcher = (from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string) => [Op, number] | null
+
+function runMatchers(matchers: Matcher[], dist: number[][], from: string[], to: string[], i: number, j: number, normalize: (a: string) => string): [Op, number] {
+    const matches = matchers
+        .map(m => m(from, to, i-1, j-1, normalize))
+        .filter(r => r !== null) as [Op, number][]
+    let min_i = -1
+    let min_d = 2 ** 64
+    for (let m_i = 0; m_i < matches.length; m_i++) {
+        const [pred_i, pred_j] = matches[m_i][0].pred(i, j)
+        let d = dist[pred_i][pred_j] + matches[m_i][1]
+        // NOTE: it's important that it is "<" and not "<=" here.
+        // Order of matchers matters for the ordering of the rendered output.
+        if (d < min_d) {
+            min_i = m_i
+            min_d = d
+        }
+    }
+    return [matches[min_i][0], min_d]
+}
+
+function noOpMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
+    return normalize(from[from_i]) === normalize(to[to_i]) ? [new NoOp(1, 1), 0] : null
+}
+
+function mergeMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
+    if (normalize(from[from_i - 1] + '-' + from[from_i]) === normalize(to[to_i]) ||
+        normalize(from[from_i - 1] + from[from_i]) === normalize(to[to_i]))
+        return [new NoOp(2, 1), 0]
+    return null
+}
+
+function insertMatcher(): [Op, number] | null {
+    return [new InsertOp(), 1]
+}
+
+function removeMatcher(): [Op, number] | null {
+    return [new RemoveOp(), 1]
+}
 
 const SPECIAL_SUBS = [
     [['Café', 'Desaster'], ['Kaffee-Desaster']],
@@ -87,7 +124,7 @@ const SPECIAL_SUBS = [
  * 
  * @returns null or a pair of [from match length, to match length]
  */
-function specialSubstitution(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string) {
+function specialSubMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
     subs: for (const sub of SPECIAL_SUBS) {
         const [sub_from, sub_to] = sub;
         if (from_i - sub_from.length + 1 < 0) continue;
@@ -106,10 +143,43 @@ function specialSubstitution(from: string[], to: string[], from_i: number, to_i:
                 continue subs;
             }
         }
-        return [sub_from.length, sub_to.length]
+        return [new NoOp(sub_from.length, sub_to.length), 0]
     }
     return null
 }
+
+function isNumberic(s: string) {
+    return /^-?\d+$/.test(s)
+}
+
+function numberMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
+    if (isNumberic(from[from_i]) && !isNumberic(to[to_i])) {
+        let num_i = +from[from_i]
+        let words_i = numberToWords(num_i)
+        if (words_i !== null && normalize(words_i) == normalize(to[to_i])) {
+            return [new NoOp(1, 1), 0]
+        }
+    }
+    if (!isNumberic(from[from_i]) && isNumberic(to[to_i])) {
+        let num_i = +to[to_i]
+        let words_i = numberToWords(num_i)
+        if (words_i !== null && normalize(from[from_i]) == normalize(words_i)) {
+            return [new NoOp(1, 1), 0]
+        }
+    }
+    return null
+}
+
+const MATCHERS: Matcher[] = [
+    // All of these produce NoOp and add 0 to the edit distance
+    noOpMatcher,
+    mergeMatcher,
+    specialSubMatcher,
+    numberMatcher,
+    // These produce their corresponding ops and add 1 to the edit distance
+    insertMatcher,
+    removeMatcher,
+]
 
 /**
  * Edit path from word array `from` to word array `to`: minimal sequence of
@@ -125,11 +195,6 @@ function specialSubstitution(from: string[], to: string[], from_i: number, to_i:
  * @returns a sequence of operations to be performed
  */
 export function editPath(from: string[], to: string[], normalize: (a: string) => string) {
-    const comp = (a: string, b: string) => normalize(a) === normalize(b)
-    let special_merges = new Map<string, string>()
-    for (const [k, v] of SPECIAL_MERGES) {
-        special_merges.set(normalize(k), normalize(v))
-    }
     // dist[i][j] - edit distance between from[:i] and to[:j]
     let dist = Array.from(Array(from.length + 1), () => new Array(to.length + 1).fill(0))
     // ops[i][j] - the last operation performed when converting from[:i] to to[:j]
@@ -144,36 +209,7 @@ export function editPath(from: string[], to: string[], normalize: (a: string) =>
     }
     for (let i = 1; i <= from.length; i++) {
         for (let j = 1; j <= to.length; j++) {
-            if (comp(from[i - 1], to[j - 1])) {
-                dist[i][j] = dist[i - 1][j - 1]
-                ops[i][j] = new NoOp(1, 1)
-            } else if (i >= 2 &&
-                (comp(from[i - 2] + '-' + from[i - 1], to[j - 1]) ||
-                    comp(from[i - 2] + from[i - 1], to[j - 1]))) {
-                dist[i][j] = dist[i - 2][j - 1]
-                ops[i][j] = new NoOp(2, 1)
-            } else {
-                let specialSub = specialSubstitution(from, to, i - 1, j - 1, normalize)
-                if (specialSub !== null) {
-                    // from - number of words in arr1 to be substituted
-                    // to - number of words in arr2 to be substituted with
-                    const [from_len, to_len] = specialSub
-                    dist[i][j] = dist[i - from_len][j - to_len]
-                    ops[i][j] = new NoOp(from_len, to_len)
-                } else {
-                    // The classic algorithm also supports substitution, but I'm not sure
-                    // how to render it nicely => not doing it here.
-                    let dist_ins = dist[i][j - 1] + 1;
-                    let dist_rem = dist[i - 1][j] + 1;
-                    if (dist_ins <= dist_rem) {
-                        dist[i][j] = dist_ins;
-                        ops[i][j] = new InsertOp()
-                    } else {
-                        dist[i][j] = dist_rem;
-                        ops[i][j] = new RemoveOp()
-                    }
-                }
-            }
+            [ops[i][j], dist[i][j]] = runMatchers(MATCHERS, dist, from, to, i, j, normalize)
         }
     }
 
