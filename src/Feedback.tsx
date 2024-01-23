@@ -1,37 +1,25 @@
-import { InsertOp, MergeOp, NoOp, Op, RemoveOp, editPath } from './edit-path'
+import { editPath } from './edit-path'
 
-function renderOp(op: Op, arr1: string[], arr2: string[]) {
-    if (op instanceof InsertOp) {
-        return <span className="transcript-add">{arr2[op.index]} </span>
-    }
-    if (op instanceof RemoveOp) {
-        return <span className="transcript-remove">{arr1[op.index]} </span>
-    }
-    if (op instanceof NoOp) {
-        return <span className="transcript-correct">{arr1[op.index_arr1]} </span>
-    }
-    if (op instanceof MergeOp) {
-        return <span className="transcript-correct">{arr2[op.index_arr2]} </span>
-    }
-    console.error("Unknown operation type: " + op.constructor.name)
+function normalize(word: string) {
+    return word.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-—\(\)\[\]]/gi, "")
 }
 
-function renderDiff(arr1: string[], arr2: string[], preprocess: (a: string) => string, trim: boolean) {
-    let path = editPath(arr1, arr2, preprocess)
-    while(trim && path.length > 1 && path[path.length - 1] instanceof InsertOp) {
+function renderOp(op: [string, string]) {
+    return <span className={`transcript-${op[0]}`}>{op[1]} </span>
+}
+
+function renderDiff(from: string[], to: string[], trim: boolean) {
+    let path = editPath(from, to, normalize)
+    while(trim && path.length > 1 && path[path.length - 1][0] === 'InsertOp') {
         path.pop()
     }
     return (<p>
-        {path.map(op => renderOp(op, arr1, arr2))}
+        {path.map(op => renderOp(op))}
     </p>)
 }
 
 function getWords(s: string) {
     return s.split(" ").filter(w => w.length > 0)
-}
-
-function normalize(word: string) {
-    return word.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-—\(\)\[\]]/gi, "")
 }
 
 type FeedbackProps = {
@@ -44,7 +32,7 @@ function Feedback(props: FeedbackProps) {
     if(props.transcript === "") {
         return <p></p>
     }
-    return renderDiff(getWords(props.transcript), getWords(props.sentence), normalize, props.listening)
+    return renderDiff(getWords(props.transcript), getWords(props.sentence), props.listening)
 }
 
 export default Feedback

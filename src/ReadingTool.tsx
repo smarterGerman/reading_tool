@@ -14,6 +14,8 @@ function ReadingTool(props: ReadingToolProps) {
   const sentences = props.sentences || [
     "Es ist ein schöner Montagmorgen in Berlin.",
     "Die Sonne scheint und die Vögel zwitschern fröhlich in den Bäumen.",
+    // zum Beispiel is recognized as "z. B." - adding this sentence so that I can easily test that that works.
+    "Es gibt viele interessante Sehenswürdigkeiten in Berlin, zum Beispiel das Brandenburger Tor und das Berliner Dom.",
   ]
 
   // Special values:
