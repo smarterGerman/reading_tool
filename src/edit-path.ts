@@ -101,9 +101,14 @@ function noOpMatcher(from: string[], to: string[], from_i: number, to_i: number,
 }
 
 function mergeMatcher(from: string[], to: string[], from_i: number, to_i: number, normalize: (a: string) => string): [Op, number] | null {
+    // Merge: "Kaffe Desaster" -> "Kaffee-Desaster"
     if (normalize(from[from_i - 1] + '-' + from[from_i]) === normalize(to[to_i]) ||
         normalize(from[from_i - 1] + from[from_i]) === normalize(to[to_i]))
         return [new MatchOp(2, 1), 0]
+    // Unmerge: "Kaffee-Desaster" -> "Kaffee Desaster"
+    if (normalize(to[to_i - 1] + '-' + to[to_i]) === normalize(from[from_i]) ||
+        normalize(to[to_i - 1] + to[to_i]) === normalize(from[from_i]))
+        return [new MatchOp(1, 2), 0]
     return null
 }
 

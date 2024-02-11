@@ -52,10 +52,26 @@ test('editPath - merge with hyphen', () => {
     ])
 })
 
+test('editPath - unmerge with hyphen', () => {
+    expect(editPath(['ein', 'Kaffee-Desaster', 'test'], ['ein', 'Kaffee', 'Desaster', 'test'], normalize)).toStrictEqual([
+        ['match', 'ein'],
+        ['match', 'Kaffee Desaster'],
+        ['match', 'test'],
+    ])
+})
+
 test('editPath - merge without hyphen', () => {
     expect(editPath(['ein', 'Kaffee', 'Desaster', 'test'], ['ein', 'KaffeeDesaster', 'test'], normalize)).toStrictEqual([
         ['match', 'ein'],
         ['match', 'KaffeeDesaster'],
+        ['match', 'test'],
+    ])
+})
+
+test('editPath - unmerge without hyphen', () => {
+    expect(editPath(['ein', 'KaffeeDesaster', 'test'], ['ein', 'Kaffee', 'Desaster', 'test'], normalize)).toStrictEqual([
+        ['match', 'ein'],
+        ['match', 'Kaffee Desaster'],
         ['match', 'test'],
     ])
 })
