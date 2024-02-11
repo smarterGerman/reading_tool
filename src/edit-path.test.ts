@@ -148,3 +148,13 @@ test('editPath - handle 6:30 vs halb 7', () => {
         ['match', 'b'],
     ])
 })
+
+test('editPath - prefer matching from the beginning', () => {
+    // Ordering matters: user input goes from left to right, so [match, insert, inster]
+    // is preferable to [insert, insert, match] even if edit distance is the same.
+    expect(editPath(['a'], ['a', 'b', 'a'], normalize)).toStrictEqual([
+        ['match', 'a'],
+        ['insert', 'b'],
+        ['insert', 'a'],
+    ])
+})

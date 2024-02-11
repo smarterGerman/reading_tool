@@ -214,16 +214,29 @@ function timeMatcher(from: string[], to: string[], from_i: number, to_i: number,
     return null
 }
 
+// Ordering matters. Matchers are applied in order, and the first matcher to
+// produce minimal distance is used.
+//
+// Counter-intuitively, this DOESN'T mean that, going from left to right, given
+// equal edit distance, the matcher chosen for each chunk will match this order.
+// Because, remember, the result of the entire algorithm is the point [n][m],
+// and priorities would be applied at that level first.
+//
+// When matching "the" and "the a the b", we want "the" <insert a> <insert the> <insert b>
+// and not <insert the> <insert a> "the" <insert b>.
+// To achieve that, we need to actually make "insert" the highest priority
+// operation (becasue we're going from end to beginning), not the lowest as a
+// naive intuition would suggest.
 const MATCHERS: Matcher[] = [
+    // These produce their corresponding ops and add 1 to the edit distance
+    insertMatcher,
+    removeMatcher,
     // All of these produce NoOp and add 0 to the edit distance
     noOpMatcher,
     mergeMatcher,
     specialSubMatcher,
     numberMatcher,
     timeMatcher,
-    // These produce their corresponding ops and add 1 to the edit distance
-    insertMatcher,
-    removeMatcher,
 ]
 
 /**
