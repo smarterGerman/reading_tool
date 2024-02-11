@@ -124,6 +124,8 @@ const SPECIAL_SUBS = [
     [['Café', 'Desaster'], ['Kaffee-Desaster']],
     [['z.', 'B.'], ['zum', 'Beispiel']],
     [['z.B'], ['zum', 'Beispiel']],
+    [['ok'], ['okay']],
+    [['okay'], ['ok']],
 ]
 
 /**

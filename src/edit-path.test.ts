@@ -92,6 +92,19 @@ test('editPath - special merge - zum Beispiel', () => {
     ])
 })
 
+test('editPath - special merge - ok', () => {
+    expect(editPath(['ein', 'ok', 'test'], ['ein', 'okay', 'test'], normalize)).toStrictEqual([
+        ['match', 'ein'],
+        ['match', 'okay'],
+        ['match', 'test'],
+    ])
+    expect(editPath(['ein', 'okay', 'test'], ['ein', 'ok', 'test'], normalize)).toStrictEqual([
+        ['match', 'ein'],
+        ['match', 'ok'],
+        ['match', 'test'],
+    ])
+})
+
 test('editPath - special merge - zum Beispiel 2', () => {
     expect(editPath(['ein', 'z.B', 'test'], ['ein', 'zum', 'Beispiel', 'test'], normalize)).toStrictEqual([
         ['match', 'ein'],
