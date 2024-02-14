@@ -1,7 +1,7 @@
 import { editPath } from './edit-path'
 
 function normalize(word: string) {
-    return word.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-—\(\)\[\]]/gi, "")
+    return word.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-–—\(\)\[\]]/gi, "")
 }
 
 function renderOp(op: [string, string]) {
