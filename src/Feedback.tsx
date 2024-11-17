@@ -1,8 +1,5 @@
 import { editPath } from './edit-path'
-
-function normalize(word: string) {
-    return word.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-–—\(\)\[\]]/gi, "")
-}
+import { getWords, normalize } from './data-extraction'
 
 function renderOp(op: [string, string]) {
     return <span className={`transcript-${op[0]}`}>{op[1]} </span>
@@ -16,10 +13,6 @@ function renderDiff(from: string[], to: string[], trim: boolean) {
     return (<p>
         {path.map(op => renderOp(op))}
     </p>)
-}
-
-function getWords(s: string) {
-    return s.split(" ").filter(w => w.length > 0)
 }
 
 type FeedbackProps = {

@@ -1,28 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import ReadingTool from './ReadingTool'
-
-type Section = {
-  id: string,
-  content: string,
-}
-
-type SenteceData = {
-  sections: Section[]
-}
-
-function extractSentences(data: SenteceData, id: string) {
-  for (const section of data.sections) {
-    if(section.id === id) {
-      return section
-        .content
-        .split("\n")
-        .map(s => s.trim())
-        .filter(s => s.length > 0)
-    }
-  }
-  return null
-}
+import { extractSentences } from './data-extraction'
 
 function App() {
   const [sentences, setSentences] = useState<null | string[]>(null)
