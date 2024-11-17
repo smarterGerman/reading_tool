@@ -1,7 +1,10 @@
 /** Takes a word and returns its normalized form that is useful for comparison.
  * Strips all punctuation and converts it to upper-case. */
 export function normalize(word: string) {
-    return word.toUpperCase().replaceAll(/[\.,:;\?\!\"\'„“«»’\-–—\(\)\[\]]/gi, "")
+    // \p{..} matches by Unicode general category. Unicode general category P
+    // is punctuation - so this line strips all punctuation.
+    // https://unicode.org/reports/tr18/#General_Category_Property
+    return word.toUpperCase().replaceAll(/\p{P}/giu, "")
 }
 
 /** Takes a sentence and returns an array of words. */
