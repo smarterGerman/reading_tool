@@ -5,6 +5,7 @@ import { extractSentences } from './data-extraction'
 
 function App() {
   const [sentences, setSentences] = useState<null | string[]>(null)
+  const [audioUrl, setAudioUrl] = useState<null | string>(null)
   const [error, setError] = useState<null | string>(null)
 
   const queryParameters = new URLSearchParams(window.location.search)
@@ -31,11 +32,12 @@ function App() {
           throw new Error(`Unsuccessful status code: ${response.status} ${response.statusText}`)
         }
         const data = await response.json();
-        const sentences = extractSentences(data, sectionId as string)
-        if(!sentences) {
+        const result = extractSentences(data, sectionId as string)
+        if(!result) {
           throw new Error(`No sentences for key ${sectionId}`)
         }
-        setSentences(sentences)
+        setSentences(result.sentences)
+        setAudioUrl(result.audioUrl)
       } catch (e: any) {
         console.error(e.message)
         setError("Error retrieving lesson data. Check your internet connection.")
@@ -53,7 +55,7 @@ function App() {
     return <><p>Loading...</p></>
   }
 
-  return <ReadingTool sentences={sentences} />
+  return <ReadingTool sentences={sentences} audioUrl={audioUrl} />
 }
 
 export default App
