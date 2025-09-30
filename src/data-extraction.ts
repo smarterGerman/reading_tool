@@ -15,6 +15,7 @@ export function getWords(s: string) {
 type Section = {
     id: string,
     content: string,
+    audio?: string,
 }
 
 export function extractSentencesFromSection(section: Section) {
@@ -38,7 +39,10 @@ type SentenceData = {
 export function extractSentences(data: SentenceData, id: string) {
     for (const section of data.sections) {
         if (section.id === id) {
-            return extractSentencesFromSection(section)
+            return {
+                sentences: extractSentencesFromSection(section),
+                audioUrl: section.audio || null
+            }
         }
     }
     return null
