@@ -29,8 +29,4 @@ type SentenceData = {
     sections: Section[]
 }
 
-/**
- * Takes JSON data and parses it into sentences.
- * @param data JSON dictation data
- * @param id lesson id
- * @returns an array of strings representing sentences
+export function extractSentences(data: SentenceData, id: string) {
